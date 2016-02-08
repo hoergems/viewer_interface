@@ -1,0 +1,6 @@
+Installation:
+    1.) mkdir build && cd build
+    
+    2.) cmake -DCMAKE_INSTALL_PREFIX=<install location> ..
+
+    3.) make && make install
