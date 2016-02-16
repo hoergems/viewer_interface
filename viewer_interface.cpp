@@ -1,6 +1,7 @@
 #include "viewer_interface.hpp"
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
+#include <unistd.h>
 
 using std::cout;
 using std::endl;
@@ -14,6 +15,54 @@ ViewerInterface::ViewerInterface ():
 	urdf_loader_(),
 	viewer_(new shared::RaveViewer()),
 	particle_plot_limit_(50){
+}
+
+void ViewerInterface::addSensor(std::string &sensor_file) {	
+	std::vector<OpenRAVE::SensorBasePtr> sensors;
+	//OpenRAVE::InterfaceBasePtr inter = env_->ReadInterfaceXMLFile(sensor_file);
+	//env_->Add(inter);
+	//cout << "added interface" << endl;	
+	env_->Load("/usr/local/share/openrave-0.9/data/testwamcamera.env.xml");
+	cout << "loaded" << endl;	
+	OpenRAVE::SensorBasePtr sensor = env_->GetSensor("BarrettWAM_spinninglaser");	
+	
+	//OpenRAVE::SensorBasePtr loaded_sensor2 = env_->GetSensor("mysensor");
+	env_->GetSensors(sensors);
+	for (size_t i = 0; i < sensors.size(); i++) {
+		cout << sensors[i]->GetName() << endl;
+	}
+	sleep(2);
+	if (sensor) {
+		cout << sensor->GetTransform() << endl;
+		sensor->Configure(OpenRAVE::SensorBase::ConfigureCommand::CC_PowerOn);
+		sensor->Configure(OpenRAVE::SensorBase::ConfigureCommand::CC_RenderDataOn);
+		cout << "renderring enabled: " << sensor->Configure(OpenRAVE::SensorBase::ConfigureCommand::CC_RenderDataCheck) << endl;
+		cout << "supports laser: " << sensor->Supports(OpenRAVE::SensorBase::SensorType::ST_Laser) << endl;
+		for (size_t i = 0; i < 500; i++) {
+			cout << i << endl;
+			//sensor->SimulationStep(0.03);
+			//OpenRAVE::SensorBase::SensorDataPtr old_sensor_data = sensor->CreateSensorData(OpenRAVE::SensorBase::SensorType::ST_Laser);
+			//OpenRAVE::SensorBase::SensorDataPtr old_sensor_data;
+			//cout << sensor->GetSensorData(old_sensor_data) << endl;
+			//cout << "stamp " << old_sensor_data->__stamp << endl;
+			//boost::shared_ptr<OpenRAVE::SensorBase::LaserSensorData> laser_data = 
+			//		boost::static_pointer_cast<OpenRAVE::SensorBase::LaserSensorData>(old_sensor_data);
+			//for (size_t i = 0; i < laser_data->intensity.size(); i++) {
+			//	cout << laser_data->intensity[i] << endl;
+			//}
+			usleep(0.03 * 1e6);
+			
+			std::vector<OpenRAVE::KinBodyPtr> bodies;
+			env_->GetBodies(bodies);
+			for (auto &k: bodies) {
+				cout << k->GetName() << " enabled: " << k->IsEnabled() << endl;
+				cout << "isVisible: " << k->IsVisible() << endl;
+			}
+			env_->StepSimulation(0.5);
+			env_->UpdatePublishedBodies();
+		    cout << "sensors size: " << sensors.size() << endl;
+		}
+	}
 }
 
 bool ViewerInterface::setupViewer(std::string model_file,

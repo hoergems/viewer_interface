@@ -26,6 +26,8 @@ public:
 						   const std::vector<std::vector<double>> &particle_colors,
 		   	   			   OpenRAVE::RobotBasePtr robot);
 	
+	void addSensor(std::string &sensor_file);
+	
 	/**
 	 * Add particles that are independent of viewer updates
 	 */
