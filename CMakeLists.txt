@@ -50,6 +50,17 @@ if(PKG_CONFIG_FOUND)
     link_directories(${OPENRAVE_LIBRARY_DIRS})    
 endif()
 
+############################# LOAD EIGEN #############################
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(EIGEN eigen3)
+    if(NOT EIGEN_FOUND)
+       message(FATAL_ERROR "EIGEN could not be found")
+    endif()
+    include_directories(${EIGEN_INCLUDE_DIRS}) 
+    message("Eigen include dirs: ${EIGEN_INCLUDE_DIRS}")
+    message("Eigen library dirs: ${EIGEN_LIBRARY_DIRS}")   
+endif()
+
 add_library(viewer_interface SHARED
             viewer_interface.cpp
             viewer.cpp

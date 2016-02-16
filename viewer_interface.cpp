@@ -3,6 +3,7 @@
 #include <boost/make_shared.hpp>
 #include <unistd.h>
 
+
 using std::cout;
 using std::endl;
 
@@ -14,55 +15,65 @@ ViewerInterface::ViewerInterface ():
 	robot_(nullptr),
 	urdf_loader_(),
 	viewer_(new shared::RaveViewer()),
-	particle_plot_limit_(50){
+	particle_plot_limit_(50),
+	sensor_(nullptr){
+}
+
+void ViewerInterface::sensor_loop() {	
+	sensor_ = env_->GetSensor("mysensor_blubb");
+	if (sensor_) {
+	    sensor_->Configure(OpenRAVE::SensorBase::ConfigureCommand::CC_PowerOn, true);
+	    sensor_->Configure(OpenRAVE::SensorBase::ConfigureCommand::CC_RenderDataOn, true);
+	    OpenRAVE::SensorBase::SensorDataPtr sensor_data = sensor_->CreateSensorData(OpenRAVE::SensorBase::SensorType::ST_Laser);
+	    boost::shared_ptr<OpenRAVE::SensorBase::LaserSensorData> laser_data = 
+	    		boost::static_pointer_cast<OpenRAVE::SensorBase::LaserSensorData>(sensor_data);
+	    while (true) {	
+	    	sensor_->GetSensorData(sensor_data);
+	    	for (size_t i = 0; i < laser_data->intensity.size(); i++) {
+	    		if (laser_data->intensity[i] > 0) {
+	    			cout << "got one" << endl;
+	    			cout << "(" << i << ", " << laser_data->intensity[i] << ")" << endl;
+	    			break;
+	    		}
+	    	}
+	    	cout << "looking" << endl;
+	    	usleep(2.0 * 1e6);
+	    }
+	}
+}
+
+void ViewerInterface::setSensorTransform(Eigen::MatrixXd &transform) {	
+	Eigen::MatrixXd rot1(4, 4);
+	double angle = M_PI;
+	rot1 << cos(angle), 0.0, sin(angle), 0.01,
+			0.0, 1.0, 0.0, 0.0,
+			-sin(angle), 0.0, cos(angle), 0.0,
+			0.0, 0.0, 0.0, 1.0;
+    transform = transform * rot1;
+	Eigen::Matrix3d mat;
+	mat << transform(0, 0), transform(0, 1), transform(0, 2),
+		   transform(1, 0), transform(1, 1), transform(1, 2),
+		   transform(2, 0), transform(2, 1), transform(2, 2);
+	Eigen::Quaternion<double> quat(mat);
+	OpenRAVE::geometry::RaveVector<double> rot(quat.x(), quat.y(), quat.z(), quat.w());
+	OpenRAVE::geometry::RaveVector<double> trans(transform(0, 3), 
+			                                     transform(1, 3),
+												 transform(2, 3));
+	const OpenRAVE::Transform sensor_trans(rot, trans);
+	sensor_->SetTransform(sensor_trans);
 }
 
 void ViewerInterface::addSensor(std::string &sensor_file) {	
-	std::vector<OpenRAVE::SensorBasePtr> sensors;
-	//OpenRAVE::InterfaceBasePtr inter = env_->ReadInterfaceXMLFile(sensor_file);
-	//env_->Add(inter);
-	//cout << "added interface" << endl;	
-	env_->Load("/usr/local/share/openrave-0.9/data/testwamcamera.env.xml");
-	cout << "loaded" << endl;	
-	OpenRAVE::SensorBasePtr sensor = env_->GetSensor("BarrettWAM_spinninglaser");	
-	
-	//OpenRAVE::SensorBasePtr loaded_sensor2 = env_->GetSensor("mysensor");
-	env_->GetSensors(sensors);
-	for (size_t i = 0; i < sensors.size(); i++) {
-		cout << sensors[i]->GetName() << endl;
-	}
-	sleep(2);
-	if (sensor) {
-		cout << sensor->GetTransform() << endl;
-		sensor->Configure(OpenRAVE::SensorBase::ConfigureCommand::CC_PowerOn);
-		sensor->Configure(OpenRAVE::SensorBase::ConfigureCommand::CC_RenderDataOn);
-		cout << "renderring enabled: " << sensor->Configure(OpenRAVE::SensorBase::ConfigureCommand::CC_RenderDataCheck) << endl;
-		cout << "supports laser: " << sensor->Supports(OpenRAVE::SensorBase::SensorType::ST_Laser) << endl;
-		for (size_t i = 0; i < 500; i++) {
-			cout << i << endl;
-			//sensor->SimulationStep(0.03);
-			//OpenRAVE::SensorBase::SensorDataPtr old_sensor_data = sensor->CreateSensorData(OpenRAVE::SensorBase::SensorType::ST_Laser);
-			//OpenRAVE::SensorBase::SensorDataPtr old_sensor_data;
-			//cout << sensor->GetSensorData(old_sensor_data) << endl;
-			//cout << "stamp " << old_sensor_data->__stamp << endl;
-			//boost::shared_ptr<OpenRAVE::SensorBase::LaserSensorData> laser_data = 
-			//		boost::static_pointer_cast<OpenRAVE::SensorBase::LaserSensorData>(old_sensor_data);
-			//for (size_t i = 0; i < laser_data->intensity.size(); i++) {
-			//	cout << laser_data->intensity[i] << endl;
-			//}
-			usleep(0.03 * 1e6);
-			
-			std::vector<OpenRAVE::KinBodyPtr> bodies;
-			env_->GetBodies(bodies);
-			for (auto &k: bodies) {
-				cout << k->GetName() << " enabled: " << k->IsEnabled() << endl;
-				cout << "isVisible: " << k->IsVisible() << endl;
-			}
-			env_->StepSimulation(0.5);
-			env_->UpdatePublishedBodies();
-		    cout << "sensors size: " << sensors.size() << endl;
-		}
-	}
+	//test();
+	OpenRAVE::RaveInitialize(true);	
+	OpenRAVE::RaveSetDebugLevel(OpenRAVE::Level_Debug);
+	env_ = OpenRAVE::RaveCreateEnvironment();
+	env_->Load("/home/hoe01h/LQG_Newt/environment/env_3dof.xml");
+	//OpenRAVE::ViewerBasePtr viewer;
+	//viewer = OpenRAVE::RaveCreateViewer(env_, "qtcoin");
+	//env_->Add(viewer);	
+	boost::thread thopenrave(boost::bind(&ViewerInterface::sensor_loop,this));	
+	//viewer->main(true);
 }
 
 bool ViewerInterface::setupViewer(std::string model_file,
@@ -73,11 +84,11 @@ bool ViewerInterface::setupViewer(std::string model_file,
 	
 	model_file_ = model_file;	
 	OpenRAVE::RaveInitialize(true);	
-	OpenRAVE::RaveSetDebugLevel(OpenRAVE::Level_Error);
+	OpenRAVE::RaveSetDebugLevel(OpenRAVE::Level_Debug);
 	env_ = OpenRAVE::RaveCreateEnvironment();
 	env_->SetPhysicsEngine(nullptr);
-	env_->SetCollisionChecker(nullptr);
-	env_->StopSimulation();
+	//env_->SetCollisionChecker(nullptr);
+	//env_->StopSimulation();
 	cout << "loading " << environment_file << endl;
 	env_->Load(environment_file);	
 	cout << "loaded environment" << endl;	
@@ -86,7 +97,7 @@ bool ViewerInterface::setupViewer(std::string model_file,
 	env_->Add(robot_ptr, true);	
 	std::vector<OpenRAVE::KinBodyPtr> bodies;
 	env_->GetBodies(bodies);
-	env_->StopSimulation();	
+	//env_->StopSimulation();	
 	for (auto &k: bodies) {
 		cout << k->GetName() << endl;
 	}
@@ -102,8 +113,8 @@ bool ViewerInterface::setupViewer(std::string model_file,
 		}
 	}
 	
-	
-	//shared::RaveViewer viewer;
+	boost::thread sensor_thread(boost::bind(&ViewerInterface::sensor_loop,this));	
+	shared::RaveViewer viewer;
 	viewer_->testView(env_);
 	cout << "Initialized viewer" << endl;
 	viewer_setup_ = true;

@@ -4,6 +4,7 @@
 #include <openrave/environment.h>
 #include "viewer.hpp"
 #include "urdf_loader.hpp"
+#include <Eigen/Dense>
 
 namespace shared {
 
@@ -27,6 +28,10 @@ public:
 		   	   			   OpenRAVE::RobotBasePtr robot);
 	
 	void addSensor(std::string &sensor_file);
+	
+	void setSensorTransform(Eigen::MatrixXd &transform);
+	
+	void sensor_loop();
 	
 	/**
 	 * Add particles that are independent of viewer updates
@@ -74,6 +79,10 @@ private:
     std::shared_ptr<shared::RaveViewer> viewer_;
     
     unsigned int particle_plot_limit_;
+    
+    //boost::thread sensor_thread_;
+    
+    OpenRAVE::SensorBasePtr sensor_;
     
 };
 
