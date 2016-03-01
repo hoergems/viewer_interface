@@ -113,7 +113,7 @@ bool ViewerInterface::setupViewer(std::string model_file,
 		}
 	}
 	
-	boost::thread sensor_thread(boost::bind(&ViewerInterface::sensor_loop,this));	
+	boost::thread sensor_thread(boost::bind(&ViewerInterface::sensor_loop, this));	
 	shared::RaveViewer viewer;
 	viewer_->testView(env_);
 	cout << "Initialized viewer" << endl;

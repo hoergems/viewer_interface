@@ -10,12 +10,18 @@ include(FindPkgConfig)
 
 ############################# LOAD URDF #############################
 if(PKG_CONFIG_FOUND)
-    pkg_check_modules(URDF urdf)
+    pkg_check_modules(URDF urdfdom)
     if(NOT URDF_FOUND)
        message(FATAL_ERROR "URDF package could not be found")
     endif()
     include_directories(${URDF_INCLUDE_DIRS})
-    link_directories(${URDF_LIBRARY_DIRS})    
+    link_directories(${URDF_LIBRARY_DIRS})
+    
+    pkg_check_modules(URDFHEADERS urdfdom_headers) 
+    if(NOT URDFHEADERS_FOUND)
+       message(FATAL_ERROR "URDFHEADERS package could not be found")
+    endif() 
+    include_directories(${URDFHEADERS_INCLUDE_DIRS})
 endif()
 
 ############################# LOAD PYTHON #############################
