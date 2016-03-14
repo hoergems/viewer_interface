@@ -122,6 +122,30 @@ bool ViewerInterface::setupViewer(std::string model_file,
 	
 }
 
+bool ViewerInterface::addObstacle(std::string &name,
+			                      std::vector<double> &dims) {
+	OpenRAVE::KinBodyPtr kin_body = OpenRAVE::RaveCreateKinBody(env_);
+	std::vector<OpenRAVE::AABB> aabb_vec;
+	cout << "made kinbody" << endl;	
+	
+	OpenRAVE::Vector trans(dims[0], dims[1], dims[2]);
+	OpenRAVE::Vector extents(dims[3], dims[4], dims[5]);
+	OpenRAVE::AABB aabb(trans, extents);	
+			
+	aabb_vec.push_back(aabb);
+	
+	const std::vector<OpenRAVE::AABB> const_rave_boxes = aabb_vec;
+	cout << "set name" << endl;
+	kin_body->SetName(name);
+	cout << "init" << endl;
+	kin_body->InitFromBoxes(const_rave_boxes, true);
+	kin_body->Enable(false);
+	cout << "init finished" << endl;
+	env_->Add(kin_body, true);	
+	cout << "added" << endl;
+	return true;
+}
+
 void ViewerInterface::setViewerSize(int x, int y) {
 	viewer_->setViewerSize(x, y);
 }

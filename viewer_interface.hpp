@@ -21,6 +21,9 @@ public:
 	bool setupViewer(std::string model_file,
                      std::string environment_file);
 	
+	bool addObstacle(std::string &name,
+			         std::vector<double> &dims); 
+	
 	void updateRobotValues(const std::vector<double> &current_joint_values,
 		   	   		       const std::vector<double> &current_joint_velocities,	
 						   const std::vector<std::vector<double>> &particle_joint_values,
