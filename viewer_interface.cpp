@@ -138,6 +138,19 @@ bool ViewerInterface::addObstacle(std::string &name,
 	return true;
 }
 
+bool ViewerInterface::removeObstacles() {
+	std::vector<OpenRAVE::KinBodyPtr> bodies;
+	env_->GetBodies(bodies);
+	std::string particle_string = "obst";
+			
+	// Remove the particle bodies from the scene	
+	for (auto &body: bodies) {		
+		if (body->GetName().find(particle_string) != std::string::npos) {			
+			env_->Remove(body);
+		}		
+	}
+}
+
 void ViewerInterface::setViewerSize(int x, int y) {
 	viewer_->setViewerSize(x, y);
 }
