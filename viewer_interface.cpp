@@ -124,30 +124,34 @@ bool ViewerInterface::setupViewer(std::string model_file,
 
 bool ViewerInterface::addObstacle(std::string &name,
 			                      std::vector<double> &dims) {
-	OpenRAVE::KinBodyPtr kin_body = OpenRAVE::RaveCreateKinBody(env_);
-	std::vector<OpenRAVE::AABB> aabb_vec;
-	OpenRAVE::Vector trans(dims[0], dims[1], dims[2]);
-	OpenRAVE::Vector extents(dims[3], dims[4], dims[5]);
-	OpenRAVE::AABB aabb(trans, extents);
-	aabb_vec.push_back(aabb);
-	const std::vector<OpenRAVE::AABB> const_rave_boxes = aabb_vec;
-	kin_body->SetName(name);
-	kin_body->InitFromBoxes(const_rave_boxes, true);
-	kin_body->Enable(false);
-	env_->Add(kin_body, true);
-	return true;
+	if (env_) {
+		OpenRAVE::KinBodyPtr kin_body = OpenRAVE::RaveCreateKinBody(env_);
+		std::vector<OpenRAVE::AABB> aabb_vec;
+		OpenRAVE::Vector trans(dims[0], dims[1], dims[2]);
+		OpenRAVE::Vector extents(dims[3], dims[4], dims[5]);
+		OpenRAVE::AABB aabb(trans, extents);
+		aabb_vec.push_back(aabb);
+		const std::vector<OpenRAVE::AABB> const_rave_boxes = aabb_vec;
+		kin_body->SetName(name);
+		kin_body->InitFromBoxes(const_rave_boxes, true);
+		kin_body->Enable(false);
+		env_->Add(kin_body, true);
+		return true;
+	}
 }
 
 bool ViewerInterface::removeObstacles() {
-	std::vector<OpenRAVE::KinBodyPtr> bodies;
-	env_->GetBodies(bodies);
-	std::string particle_string = "obst";
-			
-	// Remove the particle bodies from the scene	
-	for (auto &body: bodies) {		
-		if (body->GetName().find(particle_string) != std::string::npos) {			
-			env_->Remove(body);
-		}		
+	if (env_) {
+		std::vector<OpenRAVE::KinBodyPtr> bodies;		
+		env_->GetBodies(bodies);		
+		std::string particle_string = "obst";
+				
+		// Remove the particle bodies from the scene	
+		for (auto &body: bodies) {		
+			if (body->GetName().find(particle_string) != std::string::npos) {			
+				env_->Remove(body);
+			}		
+		}
 	}
 }
 
