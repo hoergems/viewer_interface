@@ -127,6 +127,7 @@ bool ViewerInterface::addObstacle(std::string &name,
 	if (env_) {
 		OpenRAVE::KinBodyPtr kin_body = OpenRAVE::RaveCreateKinBody(env_);
 		std::vector<OpenRAVE::AABB> aabb_vec;
+		cout << "Add box: " << dims[0] << ", " << dims[1] << ", " << dims[2] << ", " << dims[3] << ", " << dims[4] << ", " << dims[5] << endl;
 		OpenRAVE::Vector trans(dims[0], dims[1], dims[2]);
 		OpenRAVE::Vector extents(dims[3], dims[4], dims[5]);
 		OpenRAVE::AABB aabb(trans, extents);
@@ -137,6 +138,18 @@ bool ViewerInterface::addObstacle(std::string &name,
 		kin_body->Enable(false);
 		env_->Add(kin_body, true);
 		return true;
+	}
+}
+
+bool ViewerInterface::removeObstacle(std::string &name) {
+	if (env_) {
+		std::vector<OpenRAVE::KinBodyPtr> bodies;
+		env_->GetBodies(bodies);
+		for (auto &body: bodies) {
+			if (body->GetName().find(name) != std::string::npos) {			
+				env_->Remove(body);
+			}
+		}
 	}
 }
 
@@ -244,7 +257,7 @@ void ViewerInterface::addPermanentParticles(const std::vector<std::vector<double
 	
 }
 
-void ViewerInterface::setParticlePlotLimit(unsigned int particle_plot_limit) {
+void ViewerInterface::setParticlePlotLimit(unsigned int particle_plot_limit) {	
 	particle_plot_limit_ = particle_plot_limit;
 }
 

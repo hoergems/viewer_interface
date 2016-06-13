@@ -22,7 +22,9 @@ public:
                      std::string environment_file);
 	
 	bool addObstacle(std::string &name,
-			         std::vector<double> &dims); 
+			         std::vector<double> &dims);
+	
+	bool removeObstacle(std::string &name);
 	
 	bool removeObstacles();
 	
