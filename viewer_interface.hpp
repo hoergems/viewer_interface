@@ -2,6 +2,7 @@
 #define VIEWER_INTERFACE_HPP_
 #include <openrave-core.h>
 #include <openrave/environment.h>
+#include <openrave/geometry.h>
 #include "viewer.hpp"
 #include "urdf_loader.hpp"
 #include <Eigen/Dense>
@@ -74,6 +75,8 @@ public:
     void setObstacleColor(std::string &obstacle_name, 
        		              std::vector<double> &diffuse_color,
        		              std::vector<double> &ambient_color);
+    
+    void getCameraImage(std::vector<uint8_t> &image, int width, int height);
 
 private:
     bool viewer_setup_;
