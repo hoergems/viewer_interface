@@ -74,12 +74,16 @@ public:
     void setObstacleColor(std::string &obstacle_name, 
        		              std::vector<double> &diffuse_color,
        		              std::vector<double> &ambient_color);
+    
+    bool addBox(std::string &name, std::vector<double> &dims);
 
 private:
     bool viewer_setup_;
     
+    bool robot_added_;
+    
     OpenRAVE::EnvironmentBasePtr env_;
-    OpenRAVE::RobotBasePtr robot_;
+    OpenRAVE::KinBodyPtr robot_;
     
     std::string model_file_;
     

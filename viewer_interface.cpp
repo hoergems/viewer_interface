@@ -11,6 +11,7 @@ namespace shared {
 
 ViewerInterface::ViewerInterface ():
 	viewer_setup_(false),
+	robot_added_(false),
 	env_(),
 	robot_(nullptr),
 	urdf_loader_(),
@@ -92,9 +93,7 @@ bool ViewerInterface::setupViewer(std::string model_file,
 	cout << "loading " << environment_file << endl;
 	env_->Load(environment_file);	
 	cout << "loaded environment" << endl;	
-	OpenRAVE::KinBodyPtr robot_ptr = urdf_loader_->load(model_file, env_);
-	cout << "loaded robot" << endl;
-	env_->Add(robot_ptr, true);	
+	robot_ = urdf_loader_->load(model_file, env_);		
 	std::vector<OpenRAVE::KinBodyPtr> bodies;
 	env_->GetBodies(bodies);
 	//env_->StopSimulation();	
@@ -102,7 +101,7 @@ bool ViewerInterface::setupViewer(std::string model_file,
 		cout << k->GetName() << endl;
 	}
 	
-	OpenRAVE::RobotBasePtr robot = getRobot();	
+	/**OpenRAVE::RobotBasePtr robot = getRobot();	
 	const std::vector<OpenRAVE::KinBody::LinkPtr> links(robot->GetLinks());	
 	for (size_t i = 0; i < links.size(); i++) {			
 		if (links[i]->GetName() == "world") {
@@ -113,13 +112,61 @@ bool ViewerInterface::setupViewer(std::string model_file,
 		}
 	}
 	
-	boost::thread sensor_thread(boost::bind(&ViewerInterface::sensor_loop, this));	
+	boost::thread sensor_thread(boost::bind(&ViewerInterface::sensor_loop, this));*/	
 	shared::RaveViewer viewer;
 	viewer_->testView(env_);
 	cout << "Initialized viewer" << endl;
 	viewer_setup_ = true;
 	return true;
 	
+}
+
+bool ViewerInterface::addBox(std::string &name,
+		                     std::vector<double> &dims) {
+	if (env_) {
+		// We remove the box with the same name first
+		std::vector<OpenRAVE::KinBodyPtr> bodies;
+	    env_->GetBodies(bodies);
+		for (auto &body: bodies) {
+			if (body->GetName().find(name) != std::string::npos) {			
+				env_->Remove(body);
+			}
+		}
+		
+		OpenRAVE::KinBodyPtr kin_body = OpenRAVE::RaveCreateKinBody(env_);		
+		OpenRAVE::Vector trans(dims[0], dims[1], dims[2]);
+		OpenRAVE::Vector extents(dims[3], dims[4], dims[5]);
+		
+		Eigen::VectorXd x(3);
+		Eigen::VectorXd y(3);		
+		x << 1.0, 0.0, 0.0;
+		y << 0.0, 1.0, 0.0;		
+		
+		Eigen::MatrixXd rot(3, 3);
+		
+		rot << cos(dims[6]), -sin(dims[6]), 0.0,
+			   sin(dims[6]), cos(dims[6]), 0.0,
+			   0.0, 0.0, 1.0;
+		
+		Eigen::VectorXd x_rot = rot * x;
+		Eigen::VectorXd y_rot = rot * y;
+		
+		OpenRAVE::OBB obb;
+		obb.right = OpenRAVE::Vector(y_rot[0], y_rot[1], y_rot[2]);
+		obb.up = OpenRAVE::Vector(0.0, 0.0, 1.0);
+		obb.dir = OpenRAVE::Vector(x_rot[0], x_rot[1], x_rot[2]);
+		obb.pos = trans;
+		obb.extents = extents;
+		std::vector<OpenRAVE::OBB> obb_vec({obb});
+		const std::vector<OpenRAVE::OBB> const_r = obb_vec;
+		kin_body->SetName(name);
+		kin_body->InitFromBoxes(obb_vec);
+		kin_body->Enable(true);
+		env_->Add(kin_body, true);
+		return true;
+	}
+	
+	return false;
 }
 
 bool ViewerInterface::addObstacle(std::string &name,
@@ -266,6 +313,11 @@ void ViewerInterface::updateRobotValues(const std::vector<double> &current_joint
 										const std::vector<std::vector<double>> &particle_joint_values,
 										const std::vector<std::vector<double>> &particle_colors,
 								        OpenRAVE::RobotBasePtr robot=nullptr) {	
+	if (!robot_added_) {		
+		env_->Add(robot_, true);
+		robot_added_ = true;
+		cout << "loaded robot" << endl;
+	}
 	OpenRAVE::RobotBasePtr robot_to_use(nullptr);
 	
 	std::vector<OpenRAVE::KinBodyPtr> bodies;
