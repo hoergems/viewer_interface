@@ -2,6 +2,7 @@
 #define VIEWER_INTERFACE_HPP_
 #include <openrave-core.h>
 #include <openrave/environment.h>
+#include <openrave/geometry.h>
 #include "viewer.hpp"
 #include "urdf_loader.hpp"
 #include <Eigen/Dense>
@@ -75,7 +76,11 @@ public:
        		              std::vector<double> &diffuse_color,
        		              std::vector<double> &ambient_color);
     
+
     bool addBox(std::string &name, std::vector<double> &dims);
+
+    void getCameraImage(std::vector<uint8_t> &image, int width, int height);
+
 
 private:
     bool viewer_setup_;

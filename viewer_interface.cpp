@@ -227,6 +227,19 @@ void ViewerInterface::setCameraTransform(std::vector<double> &rot, std::vector<d
 	viewer_->setCameraTransform(rot, trans);
 }
 
+void ViewerInterface::getCameraImage(std::vector<uint8_t> &image, int width, int height) {
+	if (env_) {
+		OpenRAVE::ViewerBasePtr viewer = env_->GetViewer("viewer");
+		const OpenRAVE::RaveTransform<float> cameraTransform = viewer->GetCameraTransform();
+		OpenRAVE::geometry::RaveCameraIntrinsics<float> cameraIntrinsics = viewer->GetCameraIntrinsics();
+		const OpenRAVE::geometry::RaveCameraIntrinsics<double> intrinsics(cameraIntrinsics.fx,
+				                                                          cameraIntrinsics.fy,
+				                                                          cameraIntrinsics.cx,
+				                                                          cameraIntrinsics.cy);
+		viewer->GetCameraImage(image, width, height, cameraTransform, intrinsics);		
+	}
+}
+
 void ViewerInterface::removePermanentParticles() {
 	std::vector<OpenRAVE::KinBodyPtr> bodies;
     env_->GetBodies(bodies);
