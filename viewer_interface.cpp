@@ -127,6 +127,79 @@ bool ViewerInterface::setupViewer(std::string model_file,
 
 }
 
+bool ViewerInterface::addBoxes(std::vector<std::string>& names,
+                               std::vector<std::vector<double>>& dims,
+                               const std::vector<std::vector<double>>& colors)
+{
+    if (env_) {
+        // First remove the existing boxes with the same names
+        int num_plot = names.size();
+        if (num_plot > particle_plot_limit_) {
+            num_plot = particle_plot_limit_;
+        }
+
+        for (size_t i = 0; i < num_plot; i++) {
+            std::vector<OpenRAVE::KinBodyPtr> bodies;
+            env_->GetBodies(bodies);
+            for (auto & body : bodies) {
+                if (body->GetName().find(names[i]) != std::string::npos) {
+                    env_->Remove(body);
+                }
+            }
+
+            OpenRAVE::KinBodyPtr kin_body = OpenRAVE::RaveCreateKinBody(env_);
+            OpenRAVE::Vector trans(dims[i][0], dims[i][1], dims[i][2]);
+            OpenRAVE::Vector extents(dims[i][3] / 2.0, dims[i][4] / 2.0, dims[i][5] / 2.0);
+
+            Eigen::VectorXd x(3);
+            Eigen::VectorXd y(3);
+            x << 1.0, 0.0, 0.0;
+            y << 0.0, 1.0, 0.0;
+
+            Eigen::MatrixXd rot(3, 3);
+            rot << cos(dims[i][6]), -sin(dims[i][6]), 0.0,
+                sin(dims[i][6]), cos(dims[i][6]), 0.0,
+                0.0, 0.0, 1.0;
+
+            Eigen::VectorXd x_rot = rot * x;
+            Eigen::VectorXd y_rot = rot * y;
+
+            OpenRAVE::OBB obb;
+            /**obb.right = OpenRAVE::Vector(x_rot[0], x_rot[1], x_rot[2]);
+            obb.dir = OpenRAVE::Vector(0.0, 0.0, 1.0);
+            obb.up = OpenRAVE::Vector(y_rot[0], y_rot[1], y_rot[2]);*/
+            obb.right = OpenRAVE::Vector(x_rot[0], x_rot[1], x_rot[2]);
+            obb.dir = OpenRAVE::Vector(0.0, 0.0, 1.0);
+            obb.up = OpenRAVE::Vector(y_rot[0], y_rot[1], y_rot[2]);
+            obb.pos = trans;
+            obb.extents = extents;
+            std::vector<OpenRAVE::OBB> obb_vec( {obb});
+            const std::vector<OpenRAVE::OBB> const_r = obb_vec;
+            kin_body->SetName(names[i]);
+            kin_body->InitFromBoxes(obb_vec);
+            kin_body->Enable(true);
+            env_->Add(kin_body, true);
+
+            const std::vector<OpenRAVE::KinBody::LinkPtr> links = kin_body->GetLinks();
+            for (auto & link : links) {
+                const std::vector<OpenRAVE::KinBody::Link::GeometryPtr> link_geometries = link->GetGeometries();
+                for (auto & geometry : link_geometries) {
+                    if (geometry->IsVisible()) {
+                        OpenRAVE::Vector color(colors[i][0],
+                                               colors[i][1],
+                                               colors[i][2],
+                                               colors[i][3]);
+                        geometry->SetDiffuseColor(color);
+                        geometry->SetAmbientColor(color);
+                        geometry->SetTransparency(colors[i][3]);
+                    }
+                }
+            }
+
+        }
+    }
+}
+
 bool ViewerInterface::addBox(std::string& name,
                              std::vector<double>& dims)
 {
@@ -141,6 +214,13 @@ bool ViewerInterface::addBox(std::string& name,
         }
 
         OpenRAVE::KinBodyPtr kin_body = OpenRAVE::RaveCreateKinBody(env_);
+        cout << "dims[0] " << dims[0] << endl;
+        cout << "dims[1] " << dims[1] << endl;
+        cout << "dims[2] " << dims[2] << endl;
+        cout << "dims[3] " << dims[3] << endl;
+        cout << "dims[4] " << dims[4] << endl;
+        cout << "dims[5] " << dims[5] << endl;
+        cout << "dims[6] " << dims[6] << endl;
         OpenRAVE::Vector trans(dims[0], dims[1], dims[2]);
         OpenRAVE::Vector extents(dims[3], dims[4], dims[5]);
 
@@ -149,7 +229,7 @@ bool ViewerInterface::addBox(std::string& name,
         x << 1.0, 0.0, 0.0;
         y << 0.0, 1.0, 0.0;
 
-        Eigen::MatrixXd rot(3, 3);        
+        Eigen::MatrixXd rot(3, 3);
         rot << cos(dims[6]), -sin(dims[6]), 0.0,
             sin(dims[6]), cos(dims[6]), 0.0,
             0.0, 0.0, 1.0;
@@ -159,8 +239,9 @@ bool ViewerInterface::addBox(std::string& name,
 
         OpenRAVE::OBB obb;
         obb.right = OpenRAVE::Vector(x_rot[0], x_rot[1], x_rot[2]);
-        obb.up = OpenRAVE::Vector(0.0, 0.0, 1.0);
-        obb.dir = OpenRAVE::Vector(y_rot[0], y_rot[1], y_rot[2]);
+        obb.dir = OpenRAVE::Vector(0.0, 0.0, 1.0);
+        obb.up = OpenRAVE::Vector(y_rot[0], y_rot[1], y_rot[2]);
+
         obb.pos = trans;
         obb.extents = extents;
         std::vector<OpenRAVE::OBB> obb_vec( {obb});
