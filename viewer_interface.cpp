@@ -260,6 +260,14 @@ bool ViewerInterface::addObstacle(std::string& name,
                                   std::vector<double>& dims)
 {
     if (env_) {
+        // We remove the obstacle with the same name first
+        std::vector<OpenRAVE::KinBodyPtr> bodies;
+        env_->GetBodies(bodies);
+        for (auto & body : bodies) {
+            if (body->GetName().find(name) != std::string::npos) {
+                env_->Remove(body);
+            }
+        }
         OpenRAVE::KinBodyPtr kin_body = OpenRAVE::RaveCreateKinBody(env_);
         std::vector<OpenRAVE::AABB> aabb_vec;
         cout << "Add box: " << dims[0] << ", " << dims[1] << ", " << dims[2] << ", " << dims[3] << ", " << dims[4] << ", " << dims[5] << endl;
