@@ -263,7 +263,8 @@ bool ViewerInterface::addObstacle(std::string& name,
                                   std::vector<double>& dims)
 {    
     if (env_) {
-	std::vector<OpenRAVE::KinBodyPtr> bodies;
+        // We remove the obstacle with the same name first
+        std::vector<OpenRAVE::KinBodyPtr> bodies;
         env_->GetBodies(bodies);
         for (auto & body : bodies) {
             if (body->GetName().find(name) != std::string::npos) {
