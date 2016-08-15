@@ -90,15 +90,18 @@ bool ViewerInterface::setupViewer(std::string model_file,
     }
 
     model_file_ = model_file;
+    cout << "init" << endl;
     OpenRAVE::RaveInitialize(true);
     OpenRAVE::RaveSetDebugLevel(OpenRAVE::Level_Debug);
+    cout << "create environment" << endl;
     env_ = OpenRAVE::RaveCreateEnvironment();
+    cout << "created environment" << endl;
     env_->SetPhysicsEngine(nullptr);
     //env_->SetCollisionChecker(nullptr);
     //env_->StopSimulation();
     cout << "loading " << environment_file << endl;
     env_->Load(environment_file);
-    cout << "loaded environment" << endl;
+    cout << "loaded environment" << endl;    
     robot_ = urdf_loader_->load(model_file, env_);
     std::vector<OpenRAVE::KinBodyPtr> bodies;
     env_->GetBodies(bodies);
@@ -258,11 +261,18 @@ bool ViewerInterface::addBox(std::string& name,
 
 bool ViewerInterface::addObstacle(std::string& name,
                                   std::vector<double>& dims)
-{
+{    
     if (env_) {
+	std::vector<OpenRAVE::KinBodyPtr> bodies;
+        env_->GetBodies(bodies);
+        for (auto & body : bodies) {
+            if (body->GetName().find(name) != std::string::npos) {
+                env_->Remove(body);
+            }
+        }
         OpenRAVE::KinBodyPtr kin_body = OpenRAVE::RaveCreateKinBody(env_);
-        std::vector<OpenRAVE::AABB> aabb_vec;
-        cout << "Add box: " << dims[0] << ", " << dims[1] << ", " << dims[2] << ", " << dims[3] << ", " << dims[4] << ", " << dims[5] << endl;
+        std::vector<OpenRAVE::AABB> aabb_vec;	
+        //cout << "Add box: " << dims[0] << ", " << dims[1] << ", " << dims[2] << ", " << dims[3] << ", " << dims[4] << ", " << dims[5] << endl;
         OpenRAVE::Vector trans(dims[0], dims[1], dims[2]);
         OpenRAVE::Vector extents(dims[3], dims[4], dims[5]);
         OpenRAVE::AABB aabb(trans, extents);
@@ -270,7 +280,7 @@ bool ViewerInterface::addObstacle(std::string& name,
         const std::vector<OpenRAVE::AABB> const_rave_boxes = aabb_vec;
         kin_body->SetName(name);
         kin_body->InitFromBoxes(const_rave_boxes, true);
-        kin_body->Enable(false);
+        kin_body->Enable(true);
         env_->Add(kin_body, true);
         return true;
     }

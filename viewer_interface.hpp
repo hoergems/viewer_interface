@@ -82,7 +82,6 @@ public:
                   std::vector<std::vector<double>>& dims,
                   const std::vector<std::vector<double>>& colors);
 
-
     bool addBox(std::string& name, std::vector<double>& dims);
 
     void getCameraImage(std::vector<uint8_t>& image, int width, int height);
