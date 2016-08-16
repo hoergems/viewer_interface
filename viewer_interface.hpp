@@ -21,6 +21,9 @@ public:
         }
     }
 
+    bool resetViewer(std::string model_file,
+                     std::string environment_file);
+
     bool setupViewer(std::string model_file,
                      std::string environment_file);
 

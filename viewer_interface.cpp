@@ -82,6 +82,17 @@ void ViewerInterface::addSensor(std::string& sensor_file)
     //viewer->main(true);
 }
 
+bool ViewerInterface::resetViewer(std::string model_file,
+                                  std::string environment_file)
+{
+    if (viewer_setup_) {
+        env_->Reset();
+        env_->Load(environment_file);
+        robot_ = urdf_loader_->load(model_file, env_);
+	robot_added_ = false;	
+    }
+}
+
 bool ViewerInterface::setupViewer(std::string model_file,
                                   std::string environment_file)
 {
@@ -89,45 +100,17 @@ bool ViewerInterface::setupViewer(std::string model_file,
         return false;
     }
 
-    model_file_ = model_file;
-    cout << "init" << endl;
+    model_file_ = model_file;    
     OpenRAVE::RaveInitialize(true);
-    OpenRAVE::RaveSetDebugLevel(OpenRAVE::Level_Debug);
-    cout << "create environment" << endl;
-    env_ = OpenRAVE::RaveCreateEnvironment();
-    cout << "created environment" << endl;
+    OpenRAVE::RaveSetDebugLevel(OpenRAVE::Level_Debug);   
+    env_ = OpenRAVE::RaveCreateEnvironment();    
     env_->SetPhysicsEngine(nullptr);
-    //env_->SetCollisionChecker(nullptr);
-    //env_->StopSimulation();
-    cout << "loading " << environment_file << endl;
     env_->Load(environment_file);
-    cout << "loaded environment" << endl;    
     robot_ = urdf_loader_->load(model_file, env_);
-    std::vector<OpenRAVE::KinBodyPtr> bodies;
-    env_->GetBodies(bodies);
-    //env_->StopSimulation();
-    for (auto & k : bodies) {
-        cout << k->GetName() << endl;
-    }
-
-    /**OpenRAVE::RobotBasePtr robot = getRobot();
-    const std::vector<OpenRAVE::KinBody::LinkPtr> links(robot->GetLinks());
-    for (size_t i = 0; i < links.size(); i++) {
-        if (links[i]->GetName() == "world") {
-            links[i]->SetStatic(true);
-        }
-        else if (links[i]->GetName() == "end_effector") {
-            links[i]->Enable(false);
-        }
-    }
-
-    boost::thread sensor_thread(boost::bind(&ViewerInterface::sensor_loop, this));*/
     shared::RaveViewer viewer;
     viewer_->testView(env_);
-    cout << "Initialized viewer" << endl;
     viewer_setup_ = true;
     return true;
-
 }
 
 bool ViewerInterface::addBoxes(std::vector<std::string>& names,
@@ -261,7 +244,7 @@ bool ViewerInterface::addBox(std::string& name,
 
 bool ViewerInterface::addObstacle(std::string& name,
                                   std::vector<double>& dims)
-{    
+{
     if (env_) {
         // We remove the obstacle with the same name first
         std::vector<OpenRAVE::KinBodyPtr> bodies;
@@ -272,7 +255,7 @@ bool ViewerInterface::addObstacle(std::string& name,
             }
         }
         OpenRAVE::KinBodyPtr kin_body = OpenRAVE::RaveCreateKinBody(env_);
-        std::vector<OpenRAVE::AABB> aabb_vec;	
+        std::vector<OpenRAVE::AABB> aabb_vec;
         //cout << "Add box: " << dims[0] << ", " << dims[1] << ", " << dims[2] << ", " << dims[3] << ", " << dims[4] << ", " << dims[5] << endl;
         OpenRAVE::Vector trans(dims[0], dims[1], dims[2]);
         OpenRAVE::Vector extents(dims[3], dims[4], dims[5]);
