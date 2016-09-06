@@ -7,7 +7,7 @@
 #include "urdf_loader.hpp"
 #include <Eigen/Dense>
 
-namespace shared
+namespace frapu
 {
 
 class ViewerInterface
@@ -104,7 +104,7 @@ private:
 
     std::shared_ptr<shared::URDFLoader> urdf_loader_;
 
-    std::shared_ptr<shared::RaveViewer> viewer_;
+    std::shared_ptr<frapu::RaveViewer> viewer_;
 
     unsigned int particle_plot_limit_;
 

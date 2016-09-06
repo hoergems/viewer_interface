@@ -3,7 +3,7 @@
 using std::cout;
 using std::endl;
 
-namespace shared {
+namespace frapu {
 
 RaveViewer::RaveViewer():
 	size_x_(500),

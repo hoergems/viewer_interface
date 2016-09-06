@@ -7,7 +7,7 @@
 using std::cout;
 using std::endl;
 
-namespace shared
+namespace frapu
 {
 
 ViewerInterface::ViewerInterface() :
@@ -16,7 +16,7 @@ ViewerInterface::ViewerInterface() :
     env_(),
     robot_(nullptr),
     urdf_loader_(),
-    viewer_(new shared::RaveViewer()),
+    viewer_(new frapu::RaveViewer()),
     particle_plot_limit_(50),
     sensor_(nullptr)
 {
@@ -89,7 +89,7 @@ bool ViewerInterface::resetViewer(std::string model_file,
         env_->Reset();
         env_->Load(environment_file);
         robot_ = urdf_loader_->load(model_file, env_);
-	robot_added_ = false;	
+        robot_added_ = false;
     }
 }
 
@@ -100,14 +100,14 @@ bool ViewerInterface::setupViewer(std::string model_file,
         return false;
     }
 
-    model_file_ = model_file;    
+    model_file_ = model_file;
     OpenRAVE::RaveInitialize(true);
-    OpenRAVE::RaveSetDebugLevel(OpenRAVE::Level_Debug);   
-    env_ = OpenRAVE::RaveCreateEnvironment();    
+    OpenRAVE::RaveSetDebugLevel(OpenRAVE::Level_Debug);
+    env_ = OpenRAVE::RaveCreateEnvironment();
     env_->SetPhysicsEngine(nullptr);
     env_->Load(environment_file);
     robot_ = urdf_loader_->load(model_file, env_);
-    shared::RaveViewer viewer;
+    frapu::RaveViewer viewer;
     viewer_->testView(env_);
     viewer_setup_ = true;
     return true;
